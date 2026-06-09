@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 # Customer schemes
 
@@ -13,7 +13,7 @@ class CustomerResponse(Customer):
 
 class Product(BaseModel):
     name: str
-    price: float
+    price: float = Field(gt=0)
 
 class ProductResponse(Product):
     product_id: int
@@ -22,11 +22,11 @@ class ProductResponse(Product):
 
 class OrderItem(BaseModel):
     product_id: int
-    quantity: int
+    quantity: int = Field(gt=0)
 
 class Order(BaseModel):
     customer_id: int
-    items: list[OrderItem]  
+    items: list[OrderItem] = Field(min_length=1)
 
 class OrderResponse(Order):
     order_id: int

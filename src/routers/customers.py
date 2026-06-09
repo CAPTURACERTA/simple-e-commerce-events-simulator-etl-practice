@@ -1,6 +1,7 @@
 from ..schemas import Customer, CustomerResponse
 from ..db import get_db_connection
 from fastapi import APIRouter, HTTPException, Depends, status
+from psycopg2 import IntegrityError
 
 
 router = APIRouter(prefix="/customers", tags=["customers"])
@@ -8,14 +9,17 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(customer: Customer, db_conn=Depends(get_db_connection)):
-    with db_conn.cursor() as cursor:
-        cursor.execute(
-            "INSERT INTO customers (name, email) VALUES (%s, %s) RETURNING customer_id",
-            (customer.name, customer.email),
-        )
-        customer_id = cursor.fetchone()["customer_id"]
-        db_conn.commit()
-        return CustomerResponse(customer_id=customer_id, **customer.model_dump())
+    try:
+        with db_conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO customers (name, email) VALUES (%s, %s) RETURNING customer_id",
+                (customer.name, customer.email),
+            )
+            customer_id = cursor.fetchone()["customer_id"]
+            db_conn.commit()
+            return CustomerResponse(customer_id=customer_id, **customer.model_dump())
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Customer email already exists")
     
 
 @router.get("/{customer_id}", response_model=CustomerResponse)
