@@ -31,3 +31,12 @@ class Order(BaseModel):
 class OrderResponse(Order):
     order_id: int
     order_date: str
+
+# Extract schemes 
+
+class ExtractRequest(BaseModel):
+    amount: int = Field(gt=0, le=100)
+
+class ExtractResponse(BaseModel):
+    message: str
+    orders_created: int

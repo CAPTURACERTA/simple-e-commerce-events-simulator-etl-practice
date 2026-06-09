@@ -32,3 +32,10 @@ def get_product(product_id: int, db_conn=Depends(get_db_connection)):
         if not result:
             raise HTTPException(status_code=404, detail="Product not found")
         return ProductResponse(**result)
+
+@router.get("/", response_model=list[ProductResponse])
+def list_products(db_conn=Depends(get_db_connection)):
+    with db_conn.cursor() as cursor:
+        cursor.execute("SELECT product_id, name, price FROM products")
+        results = cursor.fetchall()
+        return [ProductResponse(**row) for row in results]

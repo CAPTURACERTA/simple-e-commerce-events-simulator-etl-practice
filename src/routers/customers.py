@@ -33,3 +33,10 @@ def get_customer(customer_id: int, db_conn=Depends(get_db_connection)):
         if not result:
             raise HTTPException(status_code=404, detail="Customer not found")
         return CustomerResponse(**result)
+
+@router.get("/", response_model=list[CustomerResponse])
+def list_customers(db_conn=Depends(get_db_connection)):
+    with db_conn.cursor() as cursor:
+        cursor.execute("SELECT customer_id, name, email FROM customers")
+        results = cursor.fetchall()
+        return [CustomerResponse(**row) for row in results]

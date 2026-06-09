@@ -48,3 +48,20 @@ def get_order(order_id: int, db_conn=Depends(get_db_connection)):
         items = [OrderItem(product_id=row["product_id"], quantity=row["quantity"]) for row in cursor.fetchall()]
         
         return OrderResponse(**order_row, items=items)
+
+@router.get("/", response_model=list[OrderResponse])
+def list_orders(db_conn=Depends(get_db_connection)):
+    with db_conn.cursor() as cursor:
+        cursor.execute(
+            "SELECT order_id, customer_id, order_date FROM orders ORDER BY order_date DESC"
+        )
+        orders = []
+        for order_row in cursor.fetchall():
+            order_row['order_date'] = str(order_row['order_date'])
+            cursor.execute(
+                "SELECT product_id, quantity FROM order_items WHERE order_id = %s",
+                (order_row["order_id"],),
+            )
+            items = [OrderItem(product_id=row["product_id"], quantity=row["quantity"]) for row in cursor.fetchall()]
+            orders.append(OrderResponse(**order_row, items=items))
+        return orders
