@@ -38,8 +38,21 @@ def release_connection(conn):
     connection_pool.putconn(conn)
 
 
-@contextmanager
 def get_db_connection():
+    # fastapi dependency 
+    conn = get_connection()
+    try:
+        yield conn
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)
+
+
+@contextmanager
+def db_connection_context():
+    # general context manager for db operations outside of fastapi routes
     conn = get_connection()
     try:
         yield conn
@@ -55,14 +68,14 @@ def create_tables():
         """
         CREATE TABLE IF NOT EXISTS customers (
             customer_id SERIAL PRIMARY KEY,
-            name VARCHAR(100),
-            email VARCHAR(100)
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(100) UNIQUE NOT NULL
         );
         """,
         """
         CREATE TABLE IF NOT EXISTS products (
             product_id SERIAL PRIMARY KEY,
-            name VARCHAR(100),
+            name VARCHAR(100) UNIQUE NOT NULL,
             price NUMERIC(10, 2)
         );
         """,
@@ -70,7 +83,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS orders (
             order_id SERIAL PRIMARY KEY,
             customer_id INT REFERENCES customers(customer_id),
-            order_date TIMESTAMP
+            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """,
         """
@@ -78,12 +91,12 @@ def create_tables():
             order_item_id SERIAL PRIMARY KEY,
             order_id INT REFERENCES orders(order_id),
             product_id INT REFERENCES products(product_id),
-            quantity INT
+            quantity INT NOT NULL
         );
         """,
     )
 
-    with get_db_connection() as conn:
+    with db_connection_context() as conn:
         with conn.cursor() as cursor:
             for statement in statements:
                 cursor.execute(statement)
