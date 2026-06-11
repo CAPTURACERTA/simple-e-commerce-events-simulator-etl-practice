@@ -10,8 +10,9 @@ def run_extract(request: ExtractRequest):
     try:
         orders_created = etl.insert_orders(request.amount)
         return ExtractResponse(
-            message=f"Successfully created {orders_created} orders.",
-            orders_created=orders_created
+            message=f"Successfully extracted {orders_created} orders.",
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

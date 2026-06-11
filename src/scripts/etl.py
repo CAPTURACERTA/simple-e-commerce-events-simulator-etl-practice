@@ -17,6 +17,12 @@ def get_products_ids():
 def insert_orders(amount: int) -> int:
     customer_ids = get_customers_ids()
     product_ids = get_products_ids()
+
+    if not customer_ids:
+        raise ValueError("No customers available. Create customers before extracting orders.")
+    if not product_ids:
+        raise ValueError("No products available. Create products before extracting orders.")
+
     orders = generate_random_orders(amount, customer_ids, product_ids)
 
     with db_connection_context() as db_conn:

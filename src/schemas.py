@@ -39,4 +39,3 @@ class ExtractRequest(BaseModel):
 
 class ExtractResponse(BaseModel):
     message: str
-    orders_created: int
